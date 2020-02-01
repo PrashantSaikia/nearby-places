@@ -24,7 +24,7 @@ app.layout = html.Div(style={'backgroundColor': colors['background'], 'color': c
 			dcc.Input(id='input_lon', placeholder='Enter a longitude', type='text', style={'width': '10%', 'display': 'inline-block'}),
 			dcc.Input(id='input_radius', placeholder='Enter radius', type='text', style={'width': '10%', 'display': 'inline-block'}),
 			dcc.Input(id='input_type', placeholder='Enter type of location', type='text', style={'width': '10%', 'display': 'inline-block'}),
-			dcc.Input(id='input_key', placeholder='Enter keyword', type='text', style={'width': '10%', 'display': 'inline-block'}),
+			dcc.Input(id='input_key', placeholder='Enter keyword (optional)', type='text', style={'width': '10%', 'display': 'inline-block'}),
 		]),
 		html.Button('Submit', id='submit_button'),
 		html.Div([
@@ -34,7 +34,10 @@ app.layout = html.Div(style={'backgroundColor': colors['background'], 'color': c
 	])
 
 def geocoder(lat=-33.8670522, lon=151.1957362, radius=1500, loc_type="restaurant", keyword="cruise", API_key="AIzaSyCM0ZcGcuQsIQIhaBDIHaTeK-RUc9Y7hpo"):
-	req = requests.get("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + str(lat) + "," + str(lon) + "&radius=" + str(radius)+"&type=" + loc_type + "&keyword=" + keyword + "&key=" + API_key)
+	if keyword:
+		req = requests.get("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + str(lat) + "," + str(lon) + "&radius=" + str(radius)+"&type=" + loc_type + "&keyword=" + keyword + "&key=" + API_key)
+	else:
+		req = requests.get("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + str(lat) + "," + str(lon) + "&radius=" + str(radius)+"&type=" + loc_type + "&key=" + API_key)
 	return  json.loads(req.text)
 
 API_key = "AIzaSyCM0ZcGcuQsIQIhaBDIHaTeK-RUc9Y7hpo"
@@ -51,7 +54,10 @@ mapbox_access_token = 'pk.eyJ1Ijoia3Jpc3RhZGE2NzMiLCJhIjoiY2syZmpkdzU5MGtyMzNjcD
 def update_output(n_clicks, lat, lon, radius, loc_type, keyword):
 	if n_clicks:
 		res = geocoder(lat, lon, radius, loc_type, keyword, API_key)
-		return "There are a total of {} {}s with the keyword '{}' in their name within a radius of {}m of latitude {} and longitude {}.".format(len(res['results']), loc_type, keyword, str(radius), lat, lon)
+		if keyword:
+			return "There are a total of {} {}s with the keyword '{}' in their name within a radius of {}m of latitude {} and longitude {}.".format(len(res['results']), loc_type, keyword, str(radius), lat, lon)
+		else:
+			return "There are a total of {} {}s within a radius of {}m of latitude {} and longitude {}.".format(len(res['results']), loc_type, str(radius), lat, lon)
 	else:
   		return dash.no_update
 
@@ -84,13 +90,25 @@ def update_output(n_clicks, lat_, lon_, radius, loc_type, keyword):
 				price_level.append(res['results'][i]['price_level'])
 			except:
 				price_level.append('N/A')
-			rating.append(res['results'][i]['rating'])
-			num_ratings.append(res['results'][i]['user_ratings_total'])
-			landmark.append(res['results'][i]['vicinity'])
-			if res['results'][i]['opening_hours']:
-				open_hours.append('Open now')
-			else:
-				open_hours.append('Closed now')
+			try:
+				rating.append(res['results'][i]['rating'])
+			except:
+				rating.append('N/A')
+			try:
+				num_ratings.append(res['results'][i]['user_ratings_total'])
+			except:
+				num_ratings.append('N/A')
+			try:
+				landmark.append(res['results'][i]['vicinity'])
+			except:
+				landmark.append('N/A')
+			try:
+				if res['results'][i]['opening_hours']:
+					open_hours.append('Open now')
+				else:
+					open_hours.append('Closed now')
+			except:
+				open_hours.append('N/A')
 				
 		df = pd.DataFrame({'Name':name, 'Lat':lat, 'Lon':lon, 'Price Level':price_level, 'Avg. Rating':rating, 
 						   'No. of Ratings':num_ratings, 'Landmark':landmark, 'Open':open_hours})
@@ -114,23 +132,23 @@ def update_output(n_clicks, lat_, lon_, radius, loc_type, keyword):
 					)
 		layoutmap = go.Layout(
 			margin ={'t':50},
-		    autosize=True,
-		    hovermode='closest',
-		    width=700, 
-		    height=800,
-		    showlegend=False,
-		    paper_bgcolor='rgba(0,0,0,0)',
-		    mapbox=go.layout.Mapbox(
-		        accesstoken=mapbox_access_token,
-		        bearing=0,
-		        center=go.layout.mapbox.Center(
-		            lat=float(lat_), #-33.866,
-		            lon=float(lon_) #151.205
-		        ),
-		        style="satellite-streets", # basic, streets, outdoors, light, dark, satellite, satellite-streets
-		        pitch=0,
-		        zoom=13,
-		    ),
+			autosize=True,
+			hovermode='closest',
+			width=700, 
+			height=800,
+			showlegend=False,
+			paper_bgcolor='rgba(0,0,0,0)',
+			mapbox=go.layout.Mapbox(
+				accesstoken=mapbox_access_token,
+				bearing=0,
+				center=go.layout.mapbox.Center(
+					lat=float(lat_), #-33.866,
+					lon=float(lon_) #151.205
+				),
+				style="satellite-streets", # basic, streets, outdoors, light, dark, satellite, satellite-streets
+				pitch=0,
+				zoom=13,
+			),
 		)
 
 		fig = dict( data=datamap, layout=layoutmap )
