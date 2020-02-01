@@ -17,3 +17,4 @@ pytz==2019.1
 six==1.12.0
 traitlets==4.3.2
 Werkzeug==0.15.4
+eventlet==0.25.1
