@@ -10,6 +10,7 @@ import pandas as pd
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash('Interesting Nearby Places of Interest', external_stylesheets=external_stylesheets)
+server = app.server
 
 colors = {
 	'background': '#111111',
