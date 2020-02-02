@@ -41,7 +41,7 @@ app.layout = html.Div(style={'backgroundColor': colors['background'], 'color': c
 			html.Div([
 				html.Div([dcc.Graph(id='output_graph', style={'color': colors['text'], 'backgroundColor': colors['background'], 'display': 'inline-block'})]),
 				html.H6(children="As we all know, the Wuhan coronavirus is spreading to many places across the world. So, for people looking to travel to a city, its imperative to get a qualitative assessment of how safe it is to travel to that city. With the ubiquity of Twitter, a reasonable proxy of knowing if the virus has infected anyone in any location is to check coronovirus related tweets tagging the location. Below are the latest tweets (max 20 displayed) and their average positive and negative sentiments about coronavirus in the City in which the inputted location is present. If no coronovirus related tweets are found with the city's name tagged, then its reasonable to assume that its probably safe to travel to that city. In that case, coronavirus related tweets from the country of the inputted location are displayed. If no coronovirus related tweets are found even with the country's name in the tweet, then the latest tweets (max 20) among all coronavirus related tweets are displayed."),
-				dcc.Graph(id='sentiment_pie', animate=False, style={'backgroundColor': colors['background'], 'width': '40%', 'display': 'inline-block'}),
+				dcc.Graph(id='sentiment_pie', animate=False, style={'backgroundColor': colors['background'], 'width': '50%', 'display': 'inline-block'}),
 				html.Div(id='recent-tweets-table', style={'color': colors['text'], 'width': '100%'})
 			])
 		])
@@ -278,7 +278,7 @@ def update_output(n_clicks, lat_, lon_, radius, loc_type, keyword):
 			if city!='':
 				sent_out = {'data':[trace],
 									'layout': {
-										'title':'Sentiment pie chart of Coronovirus related tweets in {}'.format(city),
+										'title':'Sentiment pie chart of Coronovirus related tweets with {} in the tweet'.format(city),
 										'plot_bgcolor': colors['background'],
 										'paper_bgcolor': colors['background'],
 										'font': {'color': colors['text']}
@@ -287,7 +287,7 @@ def update_output(n_clicks, lat_, lon_, radius, loc_type, keyword):
 			elif city=='' and country!='':
 				sent_out = {'data':[trace],
 									'layout': {
-										'title':'Sentiment pie chart of Coronovirus related tweets in {}'.format(country),
+										'title':'Sentiment pie chart of Coronovirus related tweets with {} in the tweet'.format(country),
 										'plot_bgcolor': colors['background'],
 										'paper_bgcolor': colors['background'],
 										'font': {'color': colors['text']}
@@ -309,15 +309,12 @@ def update_output(n_clicks, lat_, lon_, radius, loc_type, keyword):
 				f.write('\n')
 
 		# Output the Tweets table
-		try:
-			df.columns = ['Date', 'Tweet', 'Sentiment', 'Sentiment Smoothed']
-			df = df[['Date', 'Tweet', 'Sentiment']]
-			df['Date'] = pd.to_datetime(df['Date'],unit='ms').apply(lambda x: x.replace(microsecond=0))
-			df['Time'] = [d.time() for d in df['Date']]
-			df['Date'] = [d.date() for d in df['Date']]
-			df = df[['Date', 'Time', 'Tweet', 'Sentiment']]
-		except:
-			pass
+		df.columns = ['Date', 'Tweet', 'Sentiment', 'Sentiment Smoothed']
+		df = df[['Date', 'Tweet', 'Sentiment']]
+		df['Date'] = pd.to_datetime(df['Date'],unit='ms').apply(lambda x: x.replace(microsecond=0))
+		df['Time'] = [d.time() for d in df['Date']]
+		df['Date'] = [d.date() for d in df['Date']]
+		df = df[['Date', 'Time', 'Tweet', 'Sentiment']]
 
 		return t, go.Figure(fig), sent_out, generate_table(df)
 
