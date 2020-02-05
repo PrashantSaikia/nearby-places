@@ -10,24 +10,38 @@ import pandas as pd
 import sqlite3
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash('Interesting Nearby Places of Interest', external_stylesheets=external_stylesheets)
+app = dash.Dash(external_stylesheets=external_stylesheets)
 server = app.server
 
-colors = {
-	'background': '#ffffff',
-	'text': '#33B5FF'
-}
+colors = {'background': '#ffffff', 'text': '#33B5FF'}
+
+blank_fig = {'data': [],
+             'layout': go.Layout(
+                xaxis={
+                    'showticklabels': False,
+                    'ticks': '',
+                    'showgrid': False,
+                    'zeroline': False
+                },
+                yaxis={
+                    'showticklabels': False,
+                    'ticks': '',
+                    'showgrid': False,
+                    'zeroline': False
+                }
+            )
+        }
 
 app.layout = html.Div(style={'backgroundColor': colors['background'], 'color': colors['text'], 'height':'100vh', 'width':'100%', 'height':'100%', 'top':'0px', 'left':'0px'}, 
 	children=[
 		html.H1(children='Nearby - The app that helps you discover places of interest near you.'),
-		html.H6(children="Please input the GPS coordinates (i.e., latitude and longitude), radius of search (in metres), location type and keyword (option) to search for interesting places nearby. If you don't know the GPS coordinates, please enter the name of the location, and we'll help you find it.", style={'height':'8vh'}),
+		html.H3(children="Please input the GPS coordinates (i.e., latitude and longitude), radius of search (in metres), location type and keyword (option) to search for interesting places nearby. If you don't know the GPS coordinates, please enter the name of the location, and we'll help you find it.", style={'height':'8vh'}),
 		html.Div([
 			dcc.Input(id='input_loc_name', placeholder='Enter location name (like, Mountain View, CA)', type='text', style={'width': '20%', 'display': 'inline-block'}),
 			html.Button('Submit', id='submit_loc_name'),
 			html.H6(id='coordinates_display', style={'height':'6vh', 'font-size':'1.15em'}),
 		]),
-		html.H6(children="Some examples of location types are airport, bank, restaurant, hospital, etc. You can choose to fine tune the search by entering the optional keyword parameter. For example, if you want to search for Thai restaurants, you can enter 'restaurant' in location type and 'Thai' in keyword. If you don't provide any keyword, you will get results of all restaurants. A maximum of 20 places will be displayed. Therefore, although techinically you can give a high radius of search, a more reasonable search radius (typically around 500-2500 metres) is advised to get more meaningful results.", style={'font-size':'1.15em'}),
+		html.H4(children="Some examples of location types are airport, bank, restaurant, hospital, etc. You can choose to fine tune the search by entering the optional keyword parameter. For example, if you want to search for Thai restaurants, you can enter 'restaurant' in location type and 'Thai' in keyword. If you don't provide any keyword, you will get results of all restaurants. A maximum of 20 places will be displayed. Therefore, although techinically you can give a high radius of search, a more reasonable search radius (typically around 500-2500 metres) is advised to get more meaningful results.", style={'font-size':'1.15em'}),
 		html.Div([
 			dcc.Input(id='input_lat', placeholder='Enter a latitude', type='text', style={'width': '10%', 'display': 'inline-block'}),
 			dcc.Input(id='input_lon', placeholder='Enter a longitude', type='text', style={'width': '10%', 'display': 'inline-block'}),
@@ -37,11 +51,14 @@ app.layout = html.Div(style={'backgroundColor': colors['background'], 'color': c
 		]),
 		html.Button('Submit', id='submit_button'),
 		html.Div([
-			html.H6(id='output_text', style={'color': colors['text'], 'backgroundColor': colors['background']}),
+			html.H3(id='output_text', style={'color': colors['text'], 'backgroundColor': colors['background']}),
 			html.Div([
-				html.Div([dcc.Graph(id='output_graph', style={'color': colors['text'], 'backgroundColor': colors['background'], 'display': 'inline-block'})]),
-				html.H6(children="As we all know, the Wuhan coronavirus is spreading to many places across the world. So, for people looking to travel to a city, its imperative to get a qualitative assessment of how safe it is to travel to that city. With the ubiquity of Twitter, a reasonable proxy of knowing if the virus has infected anyone in any location is to check coronovirus related tweets tagging the location. Below are the latest tweets (max 20 displayed) and their average positive and negative sentiments about coronavirus in the City in which the inputted location is present. If no coronovirus related tweets are found with the city's name tagged, then its reasonable to assume that its probably safe to travel to that city. In that case, coronavirus related tweets from the country of the inputted location are displayed. If no coronovirus related tweets are found even with the country's name in the tweet, then the latest tweets (max 20) among all coronavirus related tweets are displayed."),
-				dcc.Graph(id='sentiment_pie', animate=False, style={'backgroundColor': colors['background'], 'width': '50%', 'display': 'inline-block'}),
+				html.Div([dcc.Graph(id='output_graph',figure=blank_fig, 
+				            		style={'color': colors['text'], 'backgroundColor': colors['background'], 'display': 'inline-block'})
+			    ]),
+				html.H4(children="As we all know, the Wuhan coronavirus is spreading to many places across the world. So, for people looking to travel to a city, its imperative to get a qualitative assessment of how safe it is to travel to that city. With the ubiquity of Twitter, a reasonable proxy of knowing if the virus has infected anyone in any location is to check coronovirus related tweets tagging the location. Below are the latest tweets (max 20 displayed) and their average positive and negative sentiments about coronavirus in the City in which the inputted location is present. If no coronovirus related tweets are found with the city's name tagged, then its reasonable to assume that its probably safe to travel to that city. In that case, coronavirus related tweets from the country of the inputted location are displayed. If no coronovirus related tweets are found even with the country's name in the tweet, then the latest tweets (max 20) among all coronavirus related tweets are displayed."),
+				dcc.Graph(id='sentiment_pie', figure=blank_fig, animate=False,
+						  style={'backgroundColor': colors['background'], 'width': '50%', 'display': 'inline-block'}),
 				html.Div(id='recent-tweets-table', style={'color': colors['text'], 'width': '100%'})
 			])
 		])
@@ -87,16 +104,19 @@ def generate_table(dataframe, max_rows=21):
 	)
 
 @app.callback(
-	Output('coordinates_display', 'children'),
+	[Output('coordinates_display', 'children'),
+	Output('input_lat', 'value'),
+	Output('input_lon', 'value')],
 	[Input('submit_loc_name', 'n_clicks')],
 	[State('input_loc_name', 'value')])
 def display_gps_coordinatates(n_clicks, input_loc_name):
 	if n_clicks:
 		if input_loc_name:
 			lat, lon, _, _ = return_lat_lon_city_country(input_loc_name)
-			return "The GPS coordinates (latitude, longitude) of '{}' are: {}, {}".format(input_loc_name, lat, lon)
+			output_str = "The GPS coordinates (latitude, longitude) of '{}' are: {}, {}".format(input_loc_name, lat, lon)
+			return output_str,lat,lon
 	else:
-  		return dash.no_update
+		return dash.no_update, dash.no_update, dash.no_update
 
 @app.callback(
 	[Output('output_text', 'children'),
@@ -110,15 +130,7 @@ def display_gps_coordinatates(n_clicks, input_loc_name):
 	State('input_type', 'value'),
 	State('input_key', 'value')])
 def update_output(n_clicks, lat_, lon_, radius, loc_type, keyword):
-	if n_clicks:
-		blank_fig = dcc.Graph(figure={
-						'data': [],
-						'layout': go.Layout(xaxis={'showgrid': False},
-											yaxis={'showgrid': False}
-											)
-						}
-					)
-					 
+	if n_clicks:					 
 		try:
 			assert float(lat_)>=-90 and float(lat_)<=90
 		except:
