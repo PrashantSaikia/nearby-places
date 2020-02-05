@@ -115,6 +115,8 @@ def display_gps_coordinatates(n_clicks, input_loc_name):
 			lat, lon, _, _ = return_lat_lon_city_country(input_loc_name)
 			output_str = "The GPS coordinates (latitude, longitude) of '{}' are: {}, {}".format(input_loc_name, lat, lon)
 			return output_str,lat,lon
+		else:
+			return dash.no_update, dash.no_update, dash.no_update
 	else:
 		return dash.no_update, dash.no_update, dash.no_update
 
