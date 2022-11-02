@@ -5,3 +5,15 @@ This app helps you discover nearby places of interest. You enter your location o
 To get real time updated tweets, keep the "twitter_data_update.py" code running in background. The size of the "twitter.db" database will keep increasing though. Otherwise, you can stop running the "twitter_data_update.py" code, and only the tweets collected thus far in the database would be displayed.
 
 ![image](https://user-images.githubusercontent.com/39755678/73805991-359ffa80-4803-11ea-959c-93771ea476ba.png)
+
+Say you - the user - visit a new city; and you know nothing about it. Say you want to find what are the Thai restaurants within a radius of 400 metres of you. The app will tell you that. Or, say you bruised your knee on a sidewalk - you want to find what are the clinics or pharmacies within a 100 metres radius of you. The app can show you that. 
+
+Basically, the user gives it the following 3 inputs:
+1. Location. The user inputs it as written text, in as little detail they want, like Sydney, or more fine tuned, like 24, Park Street, Sydney (fictional address). I then convert the text into the latitude and longitude with the Google maps API.
+2. The place of interest. Again, the user can input this in as little detail as they want, like "restaurant", or as much detail as they want, like "thai vegan restaurant serving mango chicken".
+3. The radius of search. Users can enter either huge radii like 100 km (which won't be much useful for the purposes of this app, but they can search if they want), or small radii like a few hundred metres to a few kilometres.
+
+And the app spits out the following output:
+1. How many places of interest are present within the search parameters. Like, "there are a total of 9 thai restaurants within 1500 metres of you serving mango chicken", etc.
+2. A map that shows the users the locations of those places of interest. I used the OpenMaps API to generate the map.
+3. A pie chart that shows you the real-time percentage of covid-19 related tweets mentioning the city or town where the user is currently located. Firstly, I added this functionality because early 2020 was when the covid-19 pandemic had just started, and so I thought this functionality will be helpful to tourists visiting a new place to know if the place is safe or not in terms of covid spread. And secondly, the way I built this is, I created a database to collect and store the tweets in real-time, then I built a machine learning model to analyse the tweets' sentiment, and then I display the sentiment score of each tweet as they come, and also update the pie chart to reflect the number of positive and negative sentiment tweets about that city. For example, "covid is spreading rapidly across Sydney" is a negative tweet, and "covid on the retreat in Sydney" is a positive tweet.
